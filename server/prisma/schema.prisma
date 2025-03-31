@@ -1,0 +1,65 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model Usuario {
+  id          String     @id @default(auto()) @map("_id") @db.ObjectId
+  nombre      String
+  correo      String     @unique
+  contrasena  String
+  rol         String     // 'comprador', 'vendedor', 'admin'
+  imagen      String?
+  calificaciones Int @default(0)
+  reputacion    Float    @default(0)
+  productos   Producto[] @relation(fields: [], references: [])
+  pedidos     Pedido[]   @relation(fields: [], references: [])
+  favoritos   String[]   @db.ObjectId
+  seguidores  String[]   @db.ObjectId
+  seguidos    String[]   @db.ObjectId
+  balance     Float      @default(0)
+  preferencias Json?
+  datosFiscales Json?
+  creadoEn    DateTime   @default(now())
+}
+
+model Producto {
+  id            String     @id @default(auto()) @map("_id") @db.ObjectId
+  titulo        String
+  descripcion   String
+  equipo        String
+  temporada     String
+  color         String
+  talla         String
+  tipo          String     // original, clon, copia
+  jugador       String?
+  precio        Float
+  imagenes      String[]
+  vendedorId    String     @db.ObjectId
+  creadoEn      DateTime   @default(now())
+  estaPublicado Boolean    @default(true)
+  favoritos     String[]   @db.ObjectId
+}
+
+model Pedido {
+  id          String     @id @default(auto()) @map("_id") @db.ObjectId
+  compradorId String     @db.ObjectId
+  productos   String[]   @db.ObjectId // IDs de productos
+  total       Float
+  estado      String     // pendiente, pagado, enviado, entregado, cancelado
+  guiaEnvio   String?
+  rastreo     String?
+  creadoEn    DateTime   @default(now())
+}
+
+model Mensaje {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  emisorId  String   @db.ObjectId
+  receptorId String  @db.ObjectId
+  contenido String
+  timestamp DateTime @default(now())
+}
