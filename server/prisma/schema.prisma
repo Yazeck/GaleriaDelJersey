@@ -7,59 +7,167 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Usuario {
+model User {
+  id               String     @id @default(auto()) @map("_id") @db.ObjectId
+  name             String
+  email            String     @unique
+  passwordHash     String?    // null si solo usa Google
+  googleId         String?    @unique
+  image            String?    // avatar de Google
+  role             Role       @default(USER)
+  products         Product[]
+  favorites        Favorite[]
+  messagesSent     Message[]  @relation("SentMessages")
+  messagesRecvd    Message[]  @relation("ReceivedMessages")
+  orders           Order[]
+  balance          Balance?
+  following        Follow[]   @relation("UserFollows")
+  followers        Follow[]   @relation("UserFollowers")
+  ratingsReceived  Rating[]   @relation("UserRatingsReceived")
+  ratingsGiven     Rating[]   @relation("UserRatingsGiven")
+  blogPosts        BlogPost[]
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+}
+enum Role {
+  USER
+  ADMIN
+}
+
+model Product {
   id          String     @id @default(auto()) @map("_id") @db.ObjectId
-  nombre      String
-  correo      String     @unique
-  contrasena  String
-  rol         String     // 'comprador', 'vendedor', 'admin'
-  imagen      String?
-  calificaciones Int @default(0)
-  reputacion    Float    @default(0)
-  productos   Producto[] @relation(fields: [], references: [])
-  pedidos     Pedido[]   @relation(fields: [], references: [])
-  favoritos   String[]   @db.ObjectId
-  seguidores  String[]   @db.ObjectId
-  seguidos    String[]   @db.ObjectId
-  balance     Float      @default(0)
-  preferencias Json?
-  datosFiscales Json?
-  creadoEn    DateTime   @default(now())
+  title       String
+  description String
+  category    Category
+  price       Float
+  size        String?
+  color       String?
+  brand       String?
+  player      String?
+  condition   ProductCondition
+  userId      String
+  user        User       @relation(fields: [userId], references: [id])
+  favorites   Favorite[]
+  orderItems  OrderItem[]
+  images      String[]
+  isActive    Boolean    @default(true)
+  createdAt   DateTime   @default(now())
 }
 
-model Producto {
-  id            String     @id @default(auto()) @map("_id") @db.ObjectId
-  titulo        String
-  descripcion   String
-  equipo        String
-  temporada     String
-  color         String
-  talla         String
-  tipo          String     // original, clon, copia
-  jugador       String?
-  precio        Float
-  imagenes      String[]
-  vendedorId    String     @db.ObjectId
-  creadoEn      DateTime   @default(now())
-  estaPublicado Boolean    @default(true)
-  favoritos     String[]   @db.ObjectId
+enum ProductCondition {
+  ORIGINAL
+  CLON
+  COPIA
+  USADO
+  NUEVO
 }
 
-model Pedido {
-  id          String     @id @default(auto()) @map("_id") @db.ObjectId
-  compradorId String     @db.ObjectId
-  productos   String[]   @db.ObjectId // IDs de productos
-  total       Float
-  estado      String     // pendiente, pagado, enviado, entregado, cancelado
-  guiaEnvio   String?
-  rastreo     String?
-  creadoEn    DateTime   @default(now())
+enum Category {
+  JERSEY
+  CHAMARRA
+  SHORT
+  CALCETAS
+  TACHONES
+  ESPINILLERAS
+  BALON
+  OTRO
 }
 
-model Mensaje {
+model Favorite {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  emisorId  String   @db.ObjectId
-  receptorId String  @db.ObjectId
-  contenido String
-  timestamp DateTime @default(now())
+  userId    String
+  productId String
+  user      User     @relation(fields: [userId], references: [id])
+  product   Product  @relation(fields: [productId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+model Order {
+  id          String       @id @default(auto()) @map("_id") @db.ObjectId
+  buyerId     String
+  buyer       User         @relation(fields: [buyerId], references: [id])
+  items       OrderItem[]
+  total       Float
+  shipping    ShippingInfo?
+  status      OrderStatus
+  rating      Rating?
+  createdAt   DateTime     @default(now())
+}
+
+model OrderItem {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  orderId    String
+  productId  String
+  order      Order    @relation(fields: [orderId], references: [id])
+  product    Product  @relation(fields: [productId], references: [id])
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+model ShippingInfo {
+  id               String   @id @default(auto()) @map("_id") @db.ObjectId
+  orderId          String   @unique
+  order            Order    @relation(fields: [orderId], references: [id])
+  address          String
+  estafetaGuideCode String?
+  trackingUrl      String?
+}
+
+model Message {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  senderId   String
+  receiverId String
+  sender     User     @relation("SentMessages", fields: [senderId], references: [id])
+  receiver   User     @relation("ReceivedMessages", fields: [receiverId], references: [id])
+  content    String
+  timestamp  DateTime @default(now())
+}
+
+model Balance {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id])
+  amount    Float    @default(0.0)
+  updatedAt DateTime @updatedAt
+}
+
+model Follow {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  followerId   String
+  followingId  String
+  follower     User     @relation("UserFollows", fields: [followerId], references: [id])
+  following    User     @relation("UserFollowers", fields: [followingId], references: [id])
+  createdAt    DateTime @default(now())
+
+  @@unique([followerId, followingId])
+}
+
+model Rating {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  score       Int
+  comment     String?
+  ratedUserId String
+  raterId     String
+  orderId     String?  @unique
+  ratedUser   User     @relation("UserRatingsReceived", fields: [ratedUserId], references: [id])
+  rater       User     @relation("UserRatingsGiven", fields: [raterId], references: [id])
+  order       Order?   @relation(fields: [orderId], references: [id])
+  createdAt   DateTime @default(now())
+}
+
+model BlogPost {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  title     String
+  content   String
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id])
+  image     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
