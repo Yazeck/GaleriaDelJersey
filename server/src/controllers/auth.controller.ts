@@ -2,20 +2,29 @@ import { Request, Response, NextFunction } from "express";
 import bcrypt from "bcrypt";
 import prisma from "../prisma/client";
 import { generateToken } from "../utils/jwt";
-
 export const register = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { name, email, password } = req.body;
+    const { name, username, email, password } = req.body;
 
-    const existing = await prisma.user.findUnique({ where: { email } });
-    if (existing) {
-      res.status(400).json({ error: "Email ya registrado" });
+    // Verifica si el email o username ya están registrados
+    const existingUser = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { email }
+        ]
+      }
+    });
+
+    if (existingUser) {
+      res.status(400).json({ error: "Correo o usuario ya registrados" });
       return;
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
+    
+
     const user = await prisma.user.create({
-      data: { name, email, passwordHash },
+      data: { name, username, email, passwordHash } as any,
     });
 
     const token = generateToken({ id: user.id, role: user.role });
@@ -24,6 +33,7 @@ export const register = async (req: Request, res: Response, next: NextFunction):
     next(err);
   }
 };
+
 
 export const login = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {

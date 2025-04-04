@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import axios from "axios";
 import "./LoginForm.css";
-import logo from "../assets/logo-equipo.png";
+import logo from "../assets/logo-lgdj.png";
 
 const LoginForm = () => {
   const [email, setEmail] = useState("");
@@ -25,6 +25,9 @@ const LoginForm = () => {
     <div className="login-background">
       <div className="login-card">
       <img src={logo} alt="Logo" className="login-logo" />
+
+
+
         <h1 className="login-title">
           Bienvenido a{" "}
           <span role="img" aria-label="balón">
@@ -33,6 +36,12 @@ const LoginForm = () => {
           La Galería del Jersey
         </h1>
         {error && <p className="login-error">{error}</p>}
+        <p style={{ marginTop: "1rem" }}>
+  ¿No tienes cuenta?{" "}
+  <a href="/register" style={{ color: "#1e5128", fontWeight: "bold" }}>
+    Crea una aquí
+  </a>
+</p>
 
         <form onSubmit={handleLogin}>
           <input

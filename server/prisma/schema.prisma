@@ -10,10 +10,17 @@ datasource db {
 model User {
   id               String     @id @default(auto()) @map("_id") @db.ObjectId
   name             String
+  username         String     @unique
   email            String     @unique
-  passwordHash     String?    // null si solo usa Google
-  googleId         String?    @unique
-  image            String?    // avatar de Google
+  passwordHash     String?
+  googleId         String?
+  image            String?
+  phone            String?
+  birthDate        DateTime?
+  favoriteTeam     String?
+  shirtSize        String?
+  location         String?
+  emailVerified    Boolean    @default(false)
   role             Role       @default(USER)
   products         Product[]
   favorites        Favorite[]
@@ -29,6 +36,7 @@ model User {
   createdAt        DateTime   @default(now())
   updatedAt        DateTime   @updatedAt
 }
+
 enum Role {
   USER
   ADMIN
