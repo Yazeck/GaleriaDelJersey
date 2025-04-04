@@ -4,17 +4,11 @@ import React from "react";
 import Dashboard from "./pages/Dashboard";
 import RegisterForm from "./pages/RegisterForm";
 import LoginForm from "./pages/LoginForm";
+import AuthCallback from "./pages/AuthCallback"; 
 
 
 
-function AuthCallback() {
-  return (
-    <div>
-      <h1>Auth Callback</h1>
-      <p>Processing authentication...</p>
-    </div>
-  );  
-}
+
 
 
 function App() {

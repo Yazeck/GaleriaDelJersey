@@ -19,18 +19,21 @@ passport.use(
       done: DoneFunction
     ) => {
       try {
-        const existingUser = await prisma.user.findUnique({
-          where: { googleId: profile.id },
-        });
+        const email = profile.emails?.[0]?.value || "";
+
+        const existingUser =
+          (await prisma.user.findUnique({ where: { googleId: profile.id } })) ||
+          (await prisma.user.findUnique({ where: { email } }));
 
         if (existingUser) return done(null, existingUser);
 
         const newUser = await prisma.user.create({
           data: {
             name: profile.displayName,
-            email: profile.emails?.[0]?.value || "",
+            email,
             googleId: profile.id,
             image: profile.photos?.[0]?.value || null,
+            username: `google_${profile.id.slice(-6)}`,
           },
         });
 
@@ -42,7 +45,7 @@ passport.use(
   )
 );
 
-// Tipar serializeUser y deserializeUser
+// Serialización del usuario
 passport.serializeUser((user: any, done: (err: any, id?: string) => void) => {
   done(null, user.id);
 });

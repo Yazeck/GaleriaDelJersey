@@ -1,26 +1,29 @@
-import React from "react";
-import { useEffect } from "react";
+import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { jwtDecode } from "jwt-decode";
+
 
 const AuthCallback = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const token = params.get("token");
-    const name = params.get("name");
-    const email = params.get("email");
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get("token");
 
     if (token) {
       localStorage.setItem("token", token);
-      localStorage.setItem("user", JSON.stringify({ name, email }));
-      navigate("/dashboard");
-    } else {
-      navigate("/");
+      const user: any = jwtDecode(token);
+      console.log("Token decodificado:", user);
+
+      navigate("/dashboard", { replace: true }); // 👈 Importante: replace true
     }
   }, [navigate]);
 
-  return <p>Autenticando usuario...</p>;
+  return (
+    <div>
+      <h1>Autenticando...</h1>
+    </div>
+  );
 };
 
 export default AuthCallback;
